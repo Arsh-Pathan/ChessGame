@@ -1,4 +1,7 @@
-package io.arsh;
+package io.arsh.game;
+
+import io.arsh.Config;
+import io.arsh.ui.Texture;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -179,7 +182,7 @@ public class Rules {
         return row >= 0 && row < Config.BOARD_SIZE && col >= 0 && col < Config.BOARD_SIZE;
     }
 
-    private static boolean isEmpty(State state, int row, int col) {
+    static boolean isEmpty(State state, int row, int col) {
         return inBounds(row, col) && state.getPiece(row, col) == null;
     }
 

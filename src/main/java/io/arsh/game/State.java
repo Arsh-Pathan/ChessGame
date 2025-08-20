@@ -1,4 +1,7 @@
-package io.arsh;
+package io.arsh.game;
+
+import io.arsh.Config;
+import io.arsh.ui.Texture;
 
 public class State {
     private final Texture[][] board;

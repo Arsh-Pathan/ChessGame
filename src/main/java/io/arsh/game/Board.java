@@ -1,4 +1,7 @@
-package io.arsh;
+package io.arsh.game;
+
+import io.arsh.Config;
+import io.arsh.ui.Texture;
 
 import javax.swing.*;
 import java.awt.*;
@@ -7,7 +10,7 @@ import java.util.List;
 
 public class Board extends JPanel {
 
-    private final State state;
+    public State state;
 
     private int selectedRow = -1;
     private int selectedCol = -1;
@@ -19,6 +22,10 @@ public class Board extends JPanel {
     public Board(State state) {
         this.state = state;
         setPreferredSize(new Dimension(Config.PANEL_SIZE, Config.PANEL_SIZE));
+    }
+
+    public void setState(State state) {
+        this.state = state;
     }
 
     public void setGameResult(Texture result) {
@@ -111,5 +118,6 @@ public class Board extends JPanel {
         }
         return null;
     }
+
 
 }

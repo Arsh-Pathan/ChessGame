@@ -1,8 +1,9 @@
-package io.arsh;
+package io.arsh.ui;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.util.Objects;
 
 public enum Texture {
     BOARD("assets/board.png"),
@@ -36,10 +37,10 @@ public enum Texture {
     Texture(String path) {
         try {
             image = ImageIO.read(
-                    Texture.class.getClassLoader().getResourceAsStream(path)
+                    Objects.requireNonNull(Texture.class.getClassLoader().getResourceAsStream(path))
             );
-        } catch (IOException | IllegalArgumentException e) {
-            e.printStackTrace();
+        } catch (IOException | IllegalArgumentException ex) {
+            ex.printStackTrace();
         }
     }
 
