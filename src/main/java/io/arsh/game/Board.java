@@ -32,6 +32,10 @@ public class Board extends JPanel {
         this.gameResult = result;
     }
 
+    public Texture getGameResult() {
+        return gameResult;
+    }
+
     public void setSelectedTile(int row, int col) {
         this.selectedRow = row;
         this.selectedCol = col;

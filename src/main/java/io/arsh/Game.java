@@ -9,9 +9,10 @@ import javax.swing.*;
 import java.awt.*;
 
 public class Game {
+    static boolean train;
     State state;
     static Board board;
-    Network network;
+    Network network = Network.load("models/ai.model");
     static Controls controller;
 
     public Game() {
@@ -23,13 +24,12 @@ public class Game {
              state = new State();
              board = new Board(state);
 
-            this.network = Network.load("models/ai.model");
             if (network == null) {
                 network = new Network(64, 128, 64, 1);
             }
             AI ai = new AI(network);
             controller = new Controls(board, state, ai);
-
+            controller.setAiVsAiMode(train);
             board.addMouseListener(controller);
 
             JPanel container = new JPanel(new FlowLayout(FlowLayout.CENTER, 50, 65));
@@ -43,7 +43,15 @@ public class Game {
     }
 
     public static void main(String[] args) {
-        new Game();
+        Game.train = true;
+        if (train) {
+            int instances = 1;
+            for (int i = 0; i < instances; i++) {
+                new Game();
+            }
+        } else {
+            new Game();
+        }
     }
 
 }
