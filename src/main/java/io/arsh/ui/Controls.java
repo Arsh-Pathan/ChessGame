@@ -17,8 +17,7 @@ public class Controls extends MouseAdapter {
 
     private boolean isGameOver = false;
     private boolean isWhiteTurn = true;
-    private int selectedRow = -1;
-    private int selectedCol = -1;
+    private int selectedRow = -1, selectedCol = -1;
     private List<Move> legalMoves = null;
 
     public Controls(Panel panel) {
@@ -35,12 +34,15 @@ public class Controls extends MouseAdapter {
 
         int col = (event.getX() - panel.getMargin()) / panel.getTileSize();
         int row = (event.getY() - panel.getMargin()) / panel.getTileSize();
+        if (isInvalidCoordinates(row, col)) return;
 
-        if (isInvalidCoordinates(row, col)) {
-            return;
+        if (isPieceSelected() && isLegalMove(row, col)) {
+            performMove(row, col);
+        } else {
+            selectPiece(row, col);
         }
 
-        handleSelection(row, col);
+        panel.repaint();
     }
 
     private void resetGame() {
@@ -52,27 +54,11 @@ public class Controls extends MouseAdapter {
         panel.repaint();
     }
 
-    private void handleSelection(int row, int col) {
-        if (isPieceSelected()) {
-            if (isLegalMove(row, col)) {
-                performMove(row, col);
-            } else {
-                clearSelections();
-                selectPiece(row, col);
-            }
-        } else {
-            selectPiece(row, col);
-        }
-
-        panel.repaint();
-    }
-
     private void selectPiece(int row, int col) {
         Piece piece = board.getPiece(row, col);
-        if (piece == null || !isCurrentPlayerPiece(piece)) {
-            return;
-        }
+        if (piece == null || piece.isWhite() != isWhiteTurn) return;
 
+        clearSelections();
         selectedRow = row;
         selectedCol = col;
         panel.setTile(row, col, Texture.TILE_SELECT);
@@ -89,103 +75,55 @@ public class Controls extends MouseAdapter {
     }
 
     private void checkGameState() {
-        if (areOnlyKingsLeft()) {
-            endGameWithTie();
-            return;
-        }
-
-        if (isStalemate()) {
-            endGameWithTie();
-            return;
-        }
-
-        if (isCheckmate()) {
-            endGameWithWinner();
+        if (areOnlyKingsLeft() || isStalemate()) {
+            endGame(Texture.TITLE_TIE);
+        } else if (isCheckmate()) {
+            endGame(isWhiteTurn ? Texture.TITLE_BLACK_WINS : Texture.TITLE_WHITE_WINS);
         } else {
             highlightKingIfInCheck();
         }
     }
 
     private boolean areOnlyKingsLeft() {
-        int pieceCount = 0;
+        int count = 0;
         for (int r = 0; r < 8; r++) {
             for (int c = 0; c < 8; c++) {
-                Piece piece = board.getPiece(r, c);
-                if (piece != null) {
-                    if (!piece.name().endsWith("KING")) {
-                        return false;
-                    }
-                    pieceCount++;
-                }
+                Piece p = board.getPiece(r, c);
+                if (p != null && !p.isKing()) return false;
+                if (p != null) count++;
             }
         }
-        return pieceCount == 2;
+        return count == 2;
     }
 
     private void highlightKingIfInCheck() {
-        updateKingHighlight(true);
-        updateKingHighlight(false);
+        highlightKing(true);
+        highlightKing(false);
     }
 
-    private void updateKingHighlight(boolean isWhiteKing) {
-        int[] kingPosition = findKing(isWhiteKing);
-        if (kingPosition == null) {
-            return;
-        }
+    private void highlightKing(boolean isWhiteKing) {
+        int[] pos = findKing(isWhiteKing);
+        if (pos == null) return;
 
-        int kingRow = kingPosition[0];
-        int kingCol = kingPosition[1];
-
-        if (Rules.isInCheck(board, isWhiteKing)) {
-            if (selectedRow != kingRow || selectedCol != kingCol) {
-                panel.setTile(kingRow, kingCol, Texture.TILE_OPTION);
-            }
-        } else {
-            if (selectedRow != kingRow || selectedCol != kingCol) {
-                panel.resetTile(kingRow, kingCol);
-            }
+        int row = pos[0], col = pos[1];
+        boolean inCheck = Rules.isInCheck(board, isWhiteKing);
+        if (selectedRow != row || selectedCol != col) {
+            panel.setTile(row, col, inCheck ? Texture.TILE_OPTION : null);
+            if (!inCheck) panel.resetTile(row, col);
         }
     }
 
-    private void clearSelections() {
-        if (isPieceSelected()) {
-            panel.resetTile(selectedRow, selectedCol);
-        }
-        if (legalMoves != null) {
-            for (Move move : legalMoves) {
-                panel.resetTile(move.toRow, move.toCol);
-            }
-        }
-        selectedRow = -1;
-        selectedCol = -1;
-        legalMoves = null;
-    }
-
-
-    private void highlightLegalMoves() {
-        for (Move move : legalMoves) {
-            Texture tileTexture = (board.getPiece(move.toRow, move.toCol) != null)
-                    ? Texture.TILE_OPTION
-                    : Texture.TILE_PATH;
-            panel.setTile(move.toRow, move.toCol, tileTexture);
-        }
-    }
-
-    private int[] findKing(boolean isWhiteKing) {
-        String kingName = isWhiteKing ? "WHITE_KING" : "BLACK_KING";
-        for (int r = 0; r < 8; r++) {
+    private int[] findKing(boolean isWhite) {
+        for (int r = 0; r < 8; r++)
             for (int c = 0; c < 8; c++) {
-                Piece piece = board.getPiece(r, c);
-                if (piece != null && piece.name().equals(kingName)) {
-                    return new int[]{r, c};
-                }
+                Piece p = board.getPiece(r, c);
+                if (p != null && p.isKing() && p.isWhite() == isWhite) return new int[]{r, c};
             }
-        }
         return null;
     }
 
     private boolean isInvalidCoordinates(int row, int col) {
-        return col < 0 || col >= 8 || row < 0 || row >= 8;
+        return row < 0 || row >= 8 || col < 0 || col >= 8;
     }
 
     private boolean isPieceSelected() {
@@ -193,19 +131,23 @@ public class Controls extends MouseAdapter {
     }
 
     private boolean isLegalMove(int row, int col) {
-        if (legalMoves == null) {
-            return false;
-        }
-        for (Move move : legalMoves) {
-            if (move.toRow == row && move.toCol == col) {
-                return true;
-            }
-        }
-        return false;
+        return legalMoves != null && legalMoves.stream()
+                .anyMatch(move -> move.toRow == row && move.toCol == col);
     }
 
-    private boolean isCurrentPlayerPiece(Piece piece) {
-        return (isWhiteTurn && Rules.isWhite(piece)) || (!isWhiteTurn && !Rules.isWhite(piece));
+    private void clearSelections() {
+        if (isPieceSelected()) panel.resetTile(selectedRow, selectedCol);
+        if (legalMoves != null) legalMoves.forEach(move -> panel.resetTile(move.toRow, move.toCol));
+        selectedRow = selectedCol = -1;
+        legalMoves = null;
+    }
+
+    private void highlightLegalMoves() {
+        if (legalMoves == null) return;
+        for (Move move : legalMoves) {
+            Texture texture = board.getPiece(move.toRow, move.toCol) != null ? Texture.TILE_OPTION : Texture.TILE_PATH;
+            panel.setTile(move.toRow, move.toCol, texture);
+        }
     }
 
     private boolean isStalemate() {
@@ -216,28 +158,18 @@ public class Controls extends MouseAdapter {
         return !hasLegalMoves(isWhiteTurn) && Rules.isInCheck(board, isWhiteTurn);
     }
 
-    private boolean hasLegalMoves(boolean isWhite) {
-        for (int r = 0; r < 8; r++) {
+    private boolean hasLegalMoves(boolean white) {
+        for (int r = 0; r < 8; r++)
             for (int c = 0; c < 8; c++) {
-                Piece piece = board.getPiece(r, c);
-                if (piece != null && (Rules.isWhite(piece) == isWhite)) {
-                    if (!Rules.getLegalMoves(board, r, c).isEmpty()) {
-                        return true;
-                    }
-                }
+                Piece p = board.getPiece(r, c);
+                if (p != null && p.isWhite() == white && !Rules.getLegalMoves(board, r, c).isEmpty())
+                    return true;
             }
-        }
         return false;
     }
 
-    private void endGameWithTie() {
-        panel.setTitle(Texture.TITLE_TIE);
+    private void endGame(Texture title) {
+        panel.setTitle(title);
         isGameOver = true;
     }
-
-    private void endGameWithWinner() {
-        panel.setTitle(isWhiteTurn ? Texture.TITLE_BLACK_WINS : Texture.TITLE_WHITE_WINS);
-        isGameOver = true;
-    }
-
 }

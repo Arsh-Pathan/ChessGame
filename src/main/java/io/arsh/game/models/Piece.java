@@ -28,4 +28,11 @@ public enum Piece {
         return texture;
     }
 
+    public boolean isWhite() {
+        return this.name().startsWith("WHITE");
+    }
+
+    public boolean isKing() {
+        return this.name().endsWith("KING");
+    }
 }

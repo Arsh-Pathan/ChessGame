@@ -71,14 +71,6 @@ public class Panel extends JPanel {
         repaint();
     }
 
-    public Texture getTitle() {
-        return title;
-    }
-
-    public int getPanelSize() {
-        return PANEL_SIZE;
-    }
-
     public int getTileSize() {
         return TILE_SIZE;
     }

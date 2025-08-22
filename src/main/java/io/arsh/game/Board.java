@@ -58,10 +58,6 @@ public class Board {
         return pieces[row][col];
     }
 
-    public Piece[][] getPieces() {
-        return pieces;
-    }
-
     public boolean hasMoved(int row, int col) {
         return moved[row][col];
     }

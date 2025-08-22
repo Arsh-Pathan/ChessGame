@@ -8,6 +8,19 @@ import java.util.List;
 
 public class Rules {
 
+    public static List<Move> getAllLegalMoves(Board board, boolean white) {
+        List<Move> allMoves = new ArrayList<>();
+        for (int r = 0; r < 8; r++) {
+            for (int c = 0; c < 8; c++) {
+                Piece piece = board.getPiece(r, c);
+                if (piece != null && piece.isWhite() == white) {
+                    allMoves.addAll(getLegalMoves(board, r, c));
+                }
+            }
+        }
+        return allMoves;
+    }
+
     public static List<Move> getLegalMoves(Board board, int row, int col) {
         List<Move> pseudoMoves = getValidMoves(board, row, col);
         List<Move> legalMoves = new ArrayList<>();
@@ -15,7 +28,7 @@ public class Rules {
         Piece piece = board.getPiece(row, col);
         if (piece == null) return legalMoves;
 
-        boolean white = isWhite(piece);
+        boolean white = piece.isWhite();
 
         for (Move move : pseudoMoves) {
             Board copy = new Board(board);
@@ -62,7 +75,7 @@ public class Rules {
         for (int r = 0; r < 8; r++) {
             for (int c = 0; c < 8; c++) {
                 Piece attacker = board.getPiece(r, c);
-                if (attacker != null && isWhite(attacker) == byWhite) {
+                if (attacker != null && attacker.isWhite() == byWhite) {
                     for (Move move : getValidMoves(board, r, c)) {
                         if (move.toRow == row && move.toCol == col) return true;
                     }
@@ -80,7 +93,7 @@ public class Rules {
         String name = piece.name();
 
         if (name.contains("PAWN")) {
-            addPawnMoves(board, row, col, moves, isWhite(piece));
+            addPawnMoves(board, row, col, moves, piece.isWhite());
         } else if (name.contains("ROOK")) {
             addSlidingMoves(board, row, col, moves, new int[][]{{-1, 0}, {1, 0}, {0, -1}, {0, 1}});
         } else if (name.contains("BISHOP")) {
@@ -124,13 +137,13 @@ public class Rules {
     private static void addKnightMoves(Board board, int row, int col, List<Move> moves) {
         int[][] deltas = {{-2, -1}, {-2, 1}, {-1, -2}, {-1, 2}, {1, -2}, {1, 2}, {2, -1}, {2, 1}};
         Piece knight = board.getPiece(row, col);
-        boolean white = isWhite(knight);
+        boolean white = knight.isWhite();
 
         for (int[] d : deltas) {
             int r = row + d[0], c = col + d[1];
             if (inBounds(r, c)) {
                 Piece t = board.getPiece(r, c);
-                if (t == null || isWhite(t) != white) moves.add(new Move(row, col, r, c));
+                if (t == null || t.isWhite() != white) moves.add(new Move(row, col, r, c));
             }
         }
     }
@@ -138,20 +151,20 @@ public class Rules {
     private static void addKingMoves(Board board, int row, int col, List<Move> moves) {
         int[][] deltas = {{-1, -1}, {-1, 0}, {-1, 1}, {0, -1}, {0, 1}, {1, -1}, {1, 0}, {1, 1}};
         Piece king = board.getPiece(row, col);
-        boolean white = isWhite(king);
+        boolean white = king.isWhite();
 
         for (int[] d : deltas) {
             int r = row + d[0], c = col + d[1];
             if (inBounds(r, c)) {
                 Piece t = board.getPiece(r, c);
-                if (t == null || isWhite(t) != white) moves.add(new Move(row, col, r, c));
+                if (t == null || t.isWhite() != white) moves.add(new Move(row, col, r, c));
             }
         }
     }
 
     private static void addSlidingMoves(Board board, int row, int col, List<Move> moves, int[][] dirs) {
         Piece piece = board.getPiece(row, col);
-        boolean white = isWhite(piece);
+        boolean white = piece.isWhite();
 
         for (int[] dir : dirs) {
             int r = row + dir[0], c = col + dir[1];
@@ -160,7 +173,7 @@ public class Rules {
                 if (t == null) {
                     moves.add(new Move(row, col, r, c));
                 } else {
-                    if (isWhite(t) != white) moves.add(new Move(row, col, r, c));
+                    if (t.isWhite() != white) moves.add(new Move(row, col, r, c));
                     break;
                 }
                 r += dir[0];
@@ -172,12 +185,8 @@ public class Rules {
     private static void addCapture(Board board, List<Move> moves, int fromRow, int fromCol, int row, int col, boolean white) {
         if (inBounds(row, col)) {
             Piece t = board.getPiece(row, col);
-            if (t != null && isWhite(t) != white) moves.add(new Move(fromRow, fromCol, row, col));
+            if (t != null && t.isWhite() != white) moves.add(new Move(fromRow, fromCol, row, col));
         }
-    }
-
-    public static boolean isWhite(Piece piece) {
-        return piece != null && piece.name().startsWith("WHITE");
     }
 
     private static boolean inBounds(int row, int col) {
