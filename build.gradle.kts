@@ -7,11 +7,16 @@ application {
     mainClass.set("io.arsh.Main")
 }
 
-tasks.jar {
-    manifest {
-        attributes["Main-Class"] = application.mainClass.get()
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(21))
     }
 }
 
+tasks.jar {
+    manifest {
+        attributes["Main-Class"] = application.mainClass
+    }
+}
 group = "io.arsh"
 version = "2.0.2"
